@@ -97,8 +97,39 @@ export function assembleBroadcast(r,ctx,flavor){
   f.closing+" You're listening to California Morning Radio."
  ].join(" ").replace(/\s+/g," ").trim();
 }
+const FULL_TOKENS=["[GREETING]","[CURRENT]","[TODAY]","[TOMORROW]","[CLOSING]"];
+export function validateGeminiTemplate(template){
+ if(typeof template!=="string"||template.length<125||template.length>720)return false;
+ let last=-1;
+ for(const t of FULL_TOKENS){
+  const at=template.indexOf(t);
+  if(at<=last||at<0||template.indexOf(t,at+1)>=0)return false;
+  last=at;
+ }
+ const remaining=template.replace(/\[(?:GREETING|CURRENT|TODAY|TOMORROW|CLOSING)\]/g," ");
+ if(/\[[^\]]+\]|\d|[{}<>]|https?:|@/.test(remaining))return false;
+ if(/\b(?:degrees?|fahrenheit|celsius|rain(?:y|fall)?|cloud(?:s|y)?|winds?|gusts?|sunny|sunshine|fog(?:gy)?|snow|storms?|thunder|highs?|lows?|precipitation|percent|mph|forecast|temperature|advisory|warnings?)\b/i.test(remaining))return false;
+ const words=remaining.trim().split(/\s+/).filter(Boolean).length;
+ return words>=18&&words<=65;
+}
+export function composeGeminiScript(r,ctx,template){
+ if(!validateGeminiTemplate(template))return null;
+ const wind=Number(r.wind)>=12?" Winds are currently around "+Math.round(r.wind)+" miles per hour.":"";
+ const rain=r.rain!=null&&Number(r.rain)>=15?" Today's chance of precipitation is "+Math.round(r.rain)+" percent.":"";
+ const slots={
+  "[GREETING]":ctx.greeting+", "+r.city+". It's "+ctx.localTime+" Pacific time on "+ctx.weekday+", "+ctx.dateLabel+".",
+  "[CURRENT]":"At the latest weather check, it's "+r.current_temp+" degrees with "+r.current_desc+".",
+  "[TODAY]":"Today brings "+r.today_desc+", with a high near "+r.today_high+" and a low near "+r.today_low+" degrees."+wind+rain,
+  "[TOMORROW]":"Tomorrow's outlook is "+r.tomorrow_desc+", with a high near "+r.tomorrow_high+" and a low around "+r.tomorrow_low+" degrees.",
+  "[CLOSING]":"This is California Morning Radio."
+ };
+ const output=template.replace(/\[(?:GREETING|CURRENT|TODAY|TOMORROW|CLOSING)\]/g,m=>slots[m]);
+ const total=output.trim().split(/\s+/).length;
+ if(total<75||total>165)return null;
+ return output.replace(/\s+/g," ").trim();
+}
 export async function createBroadcast(r,ctx,nonce=0,signal){
- let flavor=null,mode="time-aware";
+ let script=null,model=null;
  try{
   const response=await fetch("/api/radio-script",{
     method:"POST",headers:{"Content-Type":"application/json"},
@@ -106,10 +137,15 @@ export async function createBroadcast(r,ctx,nonce=0,signal){
       city:r.city,phase:ctx.phase,localTime:ctx.localTime,
       day:ctx.weekday,condition:r.current_desc,
       code:r.current_code,nonce
-    }),
-    signal
+    }),signal
   });
-  if(response.ok){flavor=safeFlavor((await response.json()).flavor);if(flavor)mode="AI-written";}
+  if(response.ok){
+    const result=await response.json();
+    script=composeGeminiScript(r,ctx,result.template);
+    if(script)model=result.model==="gemini-3.8-flash"?"Gemini 3.8 Flash":"Gemini Flash-Lite";
+  }
  }catch(e){if(e?.name==="AbortError")throw e;}
- return {script:assembleBroadcast(r,ctx,flavor||fallbackFlavor(r,ctx,nonce)),mode};
+ return script?{script,mode:"AI-written",model}:{
+  script:assembleBroadcast(r,ctx,fallbackFlavor(r,ctx,nonce)),mode:"time-aware",model:null
+ };
 }
