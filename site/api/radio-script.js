@@ -79,7 +79,7 @@ export default async function handler(req,res){
       thinkingConfig:{thinkingLevel:"low"}
      }
     }),
-    signal:AbortSignal.timeout(14000)
+    signal:AbortSignal.timeout(model===MODEL?9500:13000)
    });
    if(!r.ok){
     // Never return the provider's error text or key in HTTP responses.
@@ -96,6 +96,7 @@ export default async function handler(req,res){
    return res.status(200).json({template,model});
   }catch(e){
    lastCode=e?.name==="TimeoutError"?"gemini_timeout":"gemini_request_failed";
+   if(model===MODEL)continue;
    break;
   }
  }
