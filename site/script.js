@@ -1,4 +1,5 @@
 import './neural-voice.js';
+
 const pacific = 'America/Los_Angeles';
 function pacificDate() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: pacific, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -60,8 +61,11 @@ function stop(){
   const item=playing;
   playing=null;
   if(item.audio) { item.audio.pause(); item.audio.currentTime=0; }
+  if(item.generating) window.CaliforniaNeuralVoice?.cancel();
+  if(item.elapsedTimer) clearInterval(item.elapsedTimer);
+  if(item.generating && item.button) { item.button._radio=null; }
   if(item.button){
-    item.button.textContent=item.generating?'◌ Preparing recording…':(item.audio?'▶ Play recording':'▶ Generate recording');
+    item.button.textContent=item.generating?'▶ Generate radio recording':(item.audio?'▶ Play recording':'▶ Generate recording');
     item.button.setAttribute('aria-pressed','false');
   }
 }
@@ -118,7 +122,8 @@ async function speak(r,button){
   const status=document.getElementById('status-message');
   const state=button._radio;
   if(state?.generating){
-    status.textContent='Still generating your voice recording. The first time downloads a large free AI model; this may take a while.';
+    stop();
+    status.textContent='Recording generation canceled. Chrome can keep playing other audio normally.';
     return;
   }
   if(state?.ready && state.audio){
@@ -142,12 +147,16 @@ async function speak(r,button){
     return;
   }
   if(playing && playing.button!==button)stop();
-  const item={button,audio:null,generating:true};
+  const item={button,audio:null,generating:true,startedAt:Date.now(),progressText:'Preparing neural voice…'};
   playing=item;
   button._radio=item;
-  button.textContent='◌ Preparing recording…';
+  button.textContent='■ Cancel generation';
   button.setAttribute('aria-pressed','true');
-  status.textContent='Preparing the free AI voice. First listen downloads a voice model of approximately 100 MB. Please keep this page open.';
+  status.textContent='AI voice generating in the background. The page will remain responsive. First-time download ~100 MB.';
+  item.elapsedTimer=setInterval(()=>{
+    if(button._radio!==item)return clearInterval(item.elapsedTimer);
+    status.textContent=item.progressText+' · '+Math.floor((Date.now()-item.startedAt)/1000)+'s elapsed. You can cancel anytime.';
+  },1000);
   const script=announcement(r),voice=preferredVoice;
   const key=r.slug+':'+voice+':'+script;
   try{
@@ -155,18 +164,20 @@ async function speak(r,button){
     if(!cached){
       cached=await engine.generate(script,voice,message=>{
         if(button._radio===item){
-          button.textContent='◌ '+message;
-          status.textContent=message;
+          item.progressText=message;
+          status.textContent=message+' (background worker; you can cancel)';
         }
       });
       speechCache.set(key,cached);
     }
     if(button._radio!==item)return;
+    clearInterval(item.elapsedTimer);
     if(playing===item)playing=null;
     ensureAudioUI(r,button,cached);
     status.textContent='Your '+r.city+' recording is ready! Tap ▶ Play recording or use the audio controls below. The soft music is included.';
   }catch(error){
     if(button._radio!==item)return;
+    clearInterval(item.elapsedTimer);
     if(playing===item)playing=null;
     button._radio=null;
     button.textContent='↻ Retry voice generation';
@@ -209,7 +220,7 @@ function card(r){
   };
   voiceLabel.append(choice);a.append(voiceLabel);
   const button=element('button','live-play','▶ Generate radio recording');button.type='button';button.setAttribute('aria-label','Generate and listen to natural neural radio for '+r.city);button.setAttribute('aria-pressed','false');button.onclick=()=>speak(r,button);a.append(button);
-  a.append(element('p','voice-note','Free natural neural voice, not your browser’s robotic system voice. First use downloads the neural voice model (about 100 MB). Once generated, tap Play on the audio player. Original soft synth and piano are included.'));
+  a.append(element('p','voice-note','Free natural neural voice, not your browser’s robotic system voice. First use downloads the neural voice model (about 100 MB). Generation runs in the background so the page stays usable. Tap again to cancel. Once generated, tap Play. Piano and synth are included.'));
   return a;
 }
 async function load(){
