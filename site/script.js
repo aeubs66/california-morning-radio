@@ -190,7 +190,22 @@ function card(r){
   for(const [id,title] of Object.entries(window.CaliforniaNeuralVoice?.voices||{af_nicole:'Nicole · Soft & intimate',af_heart:'Heart · Warm & grounded',af_bella:'Bella · Smooth & expressive'})){
     const option=element('option','',title);option.value=id;choice.append(option);
   }
-  choice.value=preferredVoice;choice.onchange=()=>{if(playing)stop();updateVoice(choice.value)};
+  choice.value=preferredVoice;choice.onchange=()=>{
+    if(playing)stop();
+    const next=choice.value;
+    // Invalidate audio prepared with a different narrator, on both city cards.
+    document.querySelectorAll('.weather-card').forEach(card=>{
+      const b=card.querySelector('.live-play');
+      if(b?._radio?.url)URL.revokeObjectURL(b._radio.url);
+      if(b){
+        b._radio=null;b.textContent='▶ Generate radio recording';
+        b.setAttribute('aria-pressed','false');
+      }
+      card.querySelector('.radio-player')?.remove();
+    });
+    updateVoice(next);
+    document.getElementById('status-message').textContent='Voice changed. Tap Generate to create a new recording with '+(window.CaliforniaNeuralVoice?.voices?.[next]||next)+'.';
+  };
   voiceLabel.append(choice);a.append(voiceLabel);
   const button=element('button','live-play','▶ Generate radio recording');button.type='button';button.setAttribute('aria-label','Generate and listen to natural neural radio for '+r.city);button.setAttribute('aria-pressed','false');button.onclick=()=>speak(r,button);a.append(button);
   a.append(element('p','voice-note','Free natural neural voice, not your browser’s robotic system voice. First use downloads the neural voice model (about 100 MB). Once generated, tap Play on the audio player. Original soft synth and piano are included.'));
