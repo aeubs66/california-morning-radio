@@ -1,4 +1,5 @@
 import './neural-voice.js';
+import { pacificContext, createBroadcast } from './broadcast-script.js';
 
 const pacific = 'America/Los_Angeles';
 function pacificDate() {
@@ -23,6 +24,7 @@ const LOCATIONS=[
   {city:'Los Angeles',slug:'los-angeles',lat:34.0522,lon:-118.2437},
   {city:'San Francisco',slug:'san-francisco',lat:37.7749,lon:-122.4194}
 ];
+let editionCounter=0;
 const SKY={0:'clear skies',1:'mostly clear skies',2:'partly cloudy skies',3:'overcast skies',45:'fog',48:'patchy fog',51:'light drizzle',53:'drizzle',55:'steady drizzle',61:'light rain',63:'rain',65:'heavy rain',80:'a few showers',81:'rain showers',82:'heavy showers',95:'thunderstorms'};
 let playing=null;
 function rounded(x){if(x===null||x===undefined||!Number.isFinite(Number(x)))throw Error('Missing verified weather value');return Math.round(Number(x));}
@@ -39,21 +41,7 @@ async function liveWeather(c) {
   const observation=new Date(w.current.time+'Z').getTime()-offset*3600*1000;
   if(Math.abs(Date.now()-observation)>5*3600*1000)throw Error('Observation is not fresh');
   const label=code=>SKY[code]||'variable skies';
-  return {...c,date:today,current_temp:rounded(w.current.temperature_2m),current_desc:label(w.current.weather_code),today_high:rounded(w.daily.temperature_2m_max[i]),today_low:rounded(w.daily.temperature_2m_min[i]),today_desc:label(w.daily.weather_code[i]),tomorrow_high:rounded(w.daily.temperature_2m_max[j]),tomorrow_low:rounded(w.daily.temperature_2m_min[j]),tomorrow_desc:label(w.daily.weather_code[j]),wind:w.current.wind_speed_10m,rain:w.daily.precipitation_probability_max?.[i]??null};
-}
-function announcement(r){
-  const weekday=new Intl.DateTimeFormat('en-US',{timeZone:'UTC',weekday:'long'}).format(new Date(r.date+'T12:00:00Z'));
-  const wind=Number(r.wind)>=12?'A breeze near '+rounded(r.wind)+' miles an hour is moving through. ':'';
-  const rain=r.rain!==null&&Number(r.rain)>=15?'The chance of rain is '+rounded(r.rain)+' percent. ':'';
-  const closing=r.slug==='los-angeles'
-    ? 'Wherever your morning begins, let the sunshine find you.'
-    : 'From the waterfront to the quiet hills, have a peaceful morning.';
-  return 'Good morning, '+r.city+'. It is '+weekday+', '+prettyDate(r.date)+'. '
-    +'The city is waking up slowly. Right now, it is '+r.current_temp+' degrees with '+r.current_desc+'. '
-    +'Today brings '+r.today_desc+', a high near '+r.today_high+' and a low around '+r.today_low+' tonight. '
-    +wind+rain
-    +'Tomorrow brings '+r.tomorrow_desc+', a high near '+r.tomorrow_high+' and a low near '+r.tomorrow_low+'. '
-    +closing+' This is Good Morning, '+r.city+'.';
+  return {...c,date:today,current_code:Number(w.current.weather_code),current_temp:rounded(w.current.temperature_2m),current_desc:label(w.current.weather_code),today_high:rounded(w.daily.temperature_2m_max[i]),today_low:rounded(w.daily.temperature_2m_min[i]),today_desc:label(w.daily.weather_code[i]),tomorrow_high:rounded(w.daily.temperature_2m_max[j]),tomorrow_low:rounded(w.daily.temperature_2m_min[j]),tomorrow_desc:label(w.daily.weather_code[j]),wind:w.current.wind_speed_10m,rain:w.daily.precipitation_probability_max?.[i]??null};
 }
 const speechCache=new Map();
 let preferredVoice=(()=>{try{return localStorage.getItem('california-radio-voice')||'af_nicole'}catch{return 'af_nicole'}})();
@@ -69,6 +57,7 @@ function stop(){
   playing=null;
   if(item.audio) { item.audio.pause(); item.audio.currentTime=0; }
   if(item.generating) window.CaliforniaNeuralVoice?.cancel();
+  if(item.abort) item.abort.abort();
   if(item.elapsedTimer) clearInterval(item.elapsedTimer);
   if(item.generating && item.button) { item.button._radio=null; }
   if(item.button){
@@ -76,7 +65,7 @@ function stop(){
     item.button.setAttribute('aria-pressed','false');
   }
 }
-function ensureAudioUI(r,button,cached) {
+function ensureAudioUI(r,button,cached,context,scriptMode) {
   const card=button.closest('.weather-card');
   const oldPlayer=card.querySelector('.radio-player');
   if(oldPlayer){
@@ -85,7 +74,7 @@ function ensureAudioUI(r,button,cached) {
     oldPlayer.remove();
   }
   const wrapper=element('div','radio-player');
-  const title=element('div','player-ready','✓ Recording ready · '+Math.round(cached.duration)+' seconds');
+  const title=element('div','player-ready','✓ '+Math.round(cached.duration)+'-second '+context.phase+' edition · '+context.localTime+' Pacific · '+(scriptMode==='AI-written'?'AI-personalized':'time-aware'));
   const audio=element('audio');
   audio.controls=true;
   audio.preload='metadata';
@@ -95,7 +84,17 @@ function ensureAudioUI(r,button,cached) {
   const download=element('a','wav-download','↓ Download this recording');
   download.href=url;
   download.download=r.slug+'-'+r.date+'-'+preferredVoice+'.wav';
-  wrapper.append(title,audio,download);
+  const refresh=element('button','refresh-radio','↻ Generate an updated edition');
+  refresh.type='button';
+  refresh.onclick=()=>{
+    if(playing?.button===button)stop();
+    if(button._radio?.url)URL.revokeObjectURL(button._radio.url);
+    button._radio=null;
+    wrapper.remove();
+    button.textContent='▶ Generate radio recording';
+    speak(r,button);
+  };
+  wrapper.append(title,audio,download,refresh);
   card.insertBefore(wrapper,card.querySelector('.voice-note'));
   button._radio={ready:true,generating:false,audio,url};
   audio.onplay=()=>{
@@ -126,72 +125,78 @@ function ensureAudioUI(r,button,cached) {
   button.setAttribute('aria-pressed','false');
 }
 async function speak(r,button){
-  const status=document.getElementById('status-message');
-  const state=button._radio;
-  if(state?.generating){
-    stop();
-    status.textContent='Recording generation canceled. Chrome can keep playing other audio normally.';
-    return;
-  }
-  if(state?.ready && state.audio){
-    // This runs synchronously from the user's actual click, so browser
-    // autoplay protection permits playback on mobile and desktop.
-    if(state.audio.paused){
-      if(playing && playing.audio!==state.audio)stop();
-      try{
-        await state.audio.play();
-      }catch(error){
-        status.textContent='Your recording is ready, but automatic playback was blocked ('+(error?.name||'browser restriction')+'). Tap Play in the audio player directly.';
-      }
-    }else{
-      state.audio.pause();
-    }
-    return;
-  }
-  const engine=window.CaliforniaNeuralVoice;
-  if(!engine){
-    status.textContent='Voice engine has not loaded. Please refresh and try again.';
-    return;
-  }
-  if(playing && playing.button!==button)stop();
-  const item={button,audio:null,generating:true,startedAt:Date.now(),progressText:'Preparing neural voice…'};
-  playing=item;
-  button._radio=item;
-  button.textContent='■ Cancel generation';
-  button.setAttribute('aria-pressed','true');
-  status.textContent='Creating your radio report using a free cloud voice service. No AI model downloads or heavy work on your computer.';
-  item.elapsedTimer=setInterval(()=>{
-    if(button._radio!==item)return clearInterval(item.elapsedTimer);
-    status.textContent=item.progressText+' · '+Math.floor((Date.now()-item.startedAt)/1000)+'s elapsed. You can cancel anytime.';
-  },1000);
-  const script=announcement(r),voice=preferredVoice;
-  const key=r.slug+':'+voice+':'+script;
-  try{
-    let cached=speechCache.get(key);
-    if(!cached){
-      cached=await engine.generate(script,voice,message=>{
-        if(button._radio===item){
-          item.progressText=message;
-          status.textContent=message+' (background worker; you can cancel)';
-        }
-      });
-      speechCache.set(key,cached);
-    }
-    if(button._radio!==item)return;
-    clearInterval(item.elapsedTimer);
-    if(playing===item)playing=null;
-    ensureAudioUI(r,button,cached);
-    status.textContent='Your '+r.city+' recording is ready! Tap ▶ Play recording or use the audio controls below. The soft music is included.';
-  }catch(error){
-    if(button._radio!==item)return;
-    clearInterval(item.elapsedTimer);
-    if(playing===item)playing=null;
-    button._radio=null;
-    button.textContent='↻ Retry voice generation';
-    button.setAttribute('aria-pressed','false');
-    status.textContent='Could not generate free neural speech: '+(error?.message||String(error))+'. If your phone has limited memory, try desktop Chrome or Edge. No weather was invented.';
-    console.error('[California Radio] Voice generation failure:',error);
-  }
+ const status=document.getElementById('status-message');
+ const state=button._radio;
+ if(state?.generating){
+   stop();
+   status.textContent='Generation canceled. You can start a new edition whenever you like.';
+   return;
+ }
+ if(state?.ready && state.audio){
+   if(state.audio.paused){
+     if(playing && playing.audio!==state.audio)stop();
+     try{await state.audio.play();}
+     catch(e){status.textContent='Your recording is ready. Tap Play inside the audio player.';}
+   }else state.audio.pause();
+   return;
+ }
+ const engine=window.CaliforniaNeuralVoice;
+ if(!engine){status.textContent='Cloud voice player is unavailable. Refresh the page.';return;}
+ if(playing && playing.button!==button)stop();
+ const item={button,audio:null,generating:true,startedAt:Date.now(),progressText:'Fetching current California weather…',abort:new AbortController()};
+ const context=pacificContext(new Date()),nonce=(++editionCounter);
+ playing=item;button._radio=item;
+ button.textContent='■ Cancel generation';
+ button.setAttribute('aria-pressed','true');
+ status.textContent='Checking current '+r.city+' weather for the '+context.phase+' edition…';
+ item.elapsedTimer=setInterval(()=>{
+   if(button._radio!==item)return clearInterval(item.elapsedTimer);
+   status.textContent=item.progressText+' · '+Math.floor((Date.now()-item.startedAt)/1000)+'s elapsed. You can cancel anytime.';
+ },1000);
+ try{
+   // Crucial: fetch new weather when Generate is pressed, never only when the
+   // page initially opened. A recording retains the time it was produced.
+   const source=LOCATIONS.find(c=>c.slug===r.slug);
+   const fresh=await liveWeather(source);
+   if(button._radio!==item)return;
+   Object.assign(r,fresh);
+   const card=button.closest('.weather-card');
+   card.querySelector('.temperature').textContent=r.current_temp+'°';
+   card.querySelector('.sky').textContent=r.current_desc;
+   const temps=card.querySelectorAll('.forecast strong');
+   [r.today_high,r.today_low,r.tomorrow_high].forEach((t,i)=>{if(temps[i])temps[i].textContent=t+'°F';});
+   item.progressText='Writing a fresh '+context.phase+' radio edition…';
+   const broadcast=await createBroadcast(r,context,nonce,item.abort.signal);
+   if(button._radio!==item)return;
+   const voice=preferredVoice;
+   const script=broadcast.script;
+   const key=r.slug+':'+voice+':'+script;
+   item.progressText='Preparing '+r.city+' narration…';
+   let cached=speechCache.get(key);
+   if(!cached){
+     cached=await engine.generate(script,voice,message=>{
+       if(button._radio===item){
+         item.progressText=message;
+         status.textContent=message+' (you may cancel)';
+       }
+     });
+     speechCache.set(key,cached);
+   }
+   if(button._radio!==item)return;
+   clearInterval(item.elapsedTimer);
+   if(playing===item)playing=null;
+   ensureAudioUI(r,button,cached,context,broadcast.mode);
+   status.textContent='Your '+context.phase+' '+r.city+' edition is ready, recorded at '+context.localTime+' Pacific. Press Play, or generate a newer edition later.';
+ }catch(error){
+   if(button._radio!==item)return;
+   clearInterval(item.elapsedTimer);
+   if(playing===item)playing=null;
+   button._radio=null;
+   button.textContent='↻ Retry recording';
+   button.setAttribute('aria-pressed','false');
+   status.textContent='Could not create the recording: '+(error?.message||String(error))+'. No weather details were invented.';
+   console.error('[California Radio] Generation error:',error);
+ }
 }
 function card(r){
   const a=element('article','weather-card '+(r.slug==='san-francisco'?'sf':'la'));
@@ -227,7 +232,7 @@ function card(r){
   };
   voiceLabel.append(choice);a.append(voiceLabel);
   const button=element('button','live-play','▶ Generate radio recording');button.type='button';button.setAttribute('aria-label','Generate and listen to natural neural radio for '+r.city);button.setAttribute('aria-pressed','false');button.onclick=()=>speak(r,button);a.append(button);
-  a.append(element('p','voice-note','Free natural neural voice, not your browser’s robotic system voice. Speech is generated on a remote server without downloading any large model. Fast free cloud narration — no large AI downloads or heavy CPU processing. Tap again to cancel. Soft piano and synth music are included.'));
+  a.append(element('p','voice-note','A fresh weather and time-aware script is written whenever you press Generate. Optional Gemini adds unique radio writing; the accurate forecast comes directly from Open-Meteo. Cloud narration and soft music are included.'));
   return a;
 }
 async function load(){
@@ -239,8 +244,8 @@ async function load(){
       if(response.ok){const data=await response.json();if(data.date===pacificDate()&&Array.isArray(data.reports))current.forEach(r=>{const x=data.reports.find(y=>y.slug===r.slug);if(x?.audio){r.audio=x.audio;r.duration=x.duration}});}
     }catch{}
     box.replaceChildren(...current.map(card));document.getElementById('edition').textContent=prettyDate(pacificDate())+' · Pacific time';
-    status.textContent=current.every(r=>r.audio)?'Recorded MP3 editions are ready. Or listen live for the newest conditions.':'Two fresh weather reports are available. Choose Nicole, Heart or Bella, then press Generate. The free cloud service creates a playable recording within daily provider limits; scheduled MP3 publishing is not yet confirmed.';
+    status.textContent=current.every(r=>r.audio)?'Recorded MP3 editions are ready. Or listen live for the newest conditions.':'Choose a female voice and press Generate for a unique, time-aware edition with freshly checked weather. On-demand cloud speech is free within provider limits; the scheduled MP3 workflow remains unverified.';
   }catch(e){box.replaceChildren(element('article','placeholder','The live weather service is unavailable. No forecast will be invented.'));status.textContent='Unable to verify weather: '+e.message;}
 }
-const css=document.createElement('style');css.textContent='.voice-label{display:block;font-size:10px;letter-spacing:.16em;color:#dfb980;margin:17px 0 5px}.voice-choice{display:block;width:100%;margin-top:8px;border:1px solid #69817a;border-radius:7px;background:#213739;color:#f2ede1;padding:12px 10px;font:inherit;font-size:13px;letter-spacing:0}.radio-player{margin:14px 0 8px;padding:14px;border:1px solid rgba(223,185,128,.5);border-radius:9px;background:rgba(0,0,0,.16)}.radio-player audio{display:block;width:100%;margin-top:10px;height:45px}.player-ready{color:#f0d5a9;font-weight:600;font-size:12px}.wav-download{display:block;margin-top:15px;font-size:12px;color:#dfb980;text-decoration:underline;text-underline-offset:4px}.live-play{width:100%;border:1px solid #e5bc8b;border-radius:8px;padding:15px;margin-top:13px;background:#e6c49a;color:#1c3030;font-size:12px;letter-spacing:.13em;font-weight:700;cursor:pointer}.live-play[aria-pressed=true]{background:#213a3c;color:#f2ede1}.voice-note{font-size:11px;color:#bdc6bc;line-height:1.6;margin:10px 0 0}';document.head.append(css);
+const css=document.createElement('style');css.textContent='.refresh-radio{display:block;width:100%;margin-top:12px;border:1px solid #c7a775;background:transparent;color:#e8cfa7;border-radius:7px;font:inherit;font-size:12px;padding:11px;cursor:pointer}.voice-label{display:block;font-size:10px;letter-spacing:.16em;color:#dfb980;margin:17px 0 5px}.voice-choice{display:block;width:100%;margin-top:8px;border:1px solid #69817a;border-radius:7px;background:#213739;color:#f2ede1;padding:12px 10px;font:inherit;font-size:13px;letter-spacing:0}.radio-player{margin:14px 0 8px;padding:14px;border:1px solid rgba(223,185,128,.5);border-radius:9px;background:rgba(0,0,0,.16)}.radio-player audio{display:block;width:100%;margin-top:10px;height:45px}.player-ready{color:#f0d5a9;font-weight:600;font-size:12px}.wav-download{display:block;margin-top:15px;font-size:12px;color:#dfb980;text-decoration:underline;text-underline-offset:4px}.live-play{width:100%;border:1px solid #e5bc8b;border-radius:8px;padding:15px;margin-top:13px;background:#e6c49a;color:#1c3030;font-size:12px;letter-spacing:.13em;font-weight:700;cursor:pointer}.live-play[aria-pressed=true]{background:#213a3c;color:#f2ede1}.voice-note{font-size:11px;color:#bdc6bc;line-height:1.6;margin:10px 0 0}';document.head.append(css);
 updateClock();setInterval(updateClock,60000);load();
