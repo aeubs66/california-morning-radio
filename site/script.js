@@ -1,3 +1,4 @@
+import './neural-voice.js';
 const pacific = 'America/Los_Angeles';
 function pacificDate() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: pacific, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());

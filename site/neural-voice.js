@@ -1,3 +1,4 @@
+import { KokoroTTS } from 'kokoro-js';
 /* Free high-quality American female speech synthesized locally with Kokoro-82M.
    No paid service, no uploading the forecast text, no browser system voices.
    The pretrained weights download once and are cached by the browser. */
@@ -15,7 +16,7 @@
     if (!enginePromise) {
       progressMessage(onProgress, "Downloading the free neural voice model (first listen only)…");
       enginePromise = (async () => {
-        const { KokoroTTS } = await import("https://esm.sh/kokoro-js@1.2.1?bundle");
+        // Kokoro bundled for the browser with Vite (no Node.js fs shims)
         return KokoroTTS.from_pretrained(MODEL, { dtype: "q8", device: "wasm" });
       })().catch(err => { enginePromise = null; throw err; });
     }
