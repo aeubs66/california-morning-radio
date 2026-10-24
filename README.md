@@ -2,9 +2,9 @@
 
 A peaceful California weather radio show for **Los Angeles** and **San Francisco**, hosted online for free.
 
-- **Live radio:** Fresh Open-Meteo weather at the time you play, spoken by free [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) American female neural voices right in your browser, with a subtle original synth/piano soundtrack. Choose Nicole, Heart or Bella and download a WAV.
+- **Live radio:** Fresh Open-Meteo weather when you press Generate, narrated by American female [Kokoro voices hosted by TTS.ai](https://tts.ai/api/), not computed in your browser. Choose Nicole, Heart or Bella; the site downloads cloud-generated speech and mixes a quiet original synth/piano soundtrack into a WAV you can play or save. No large local AI download or heavy local inference.
 - **Daily recorded editions:** A GitHub Actions job is configured for **8:00 AM America/Los_Angeles** and can generate two MP3s with Kokoro on a cloud runner. Availability depends on GitHub Actions runner access and limits; this job is not guaranteed to start at the exact minute.
-- **Privacy:** No ElevenLabs API key or paid speech credits. The browser downloads model weights as needed. The weather scripts are not sent to a paid voice API.
+- **Privacy:** No ElevenLabs API key or credits. The forecast text is sent from your browser to the third-party free [TTS.ai](https://tts.ai/) voice service to generate speech; avoid including personal text. Audio mixing happens locally. No model weights need to download.
 - **Source:** This is a standalone GitHub repository, separate from `aeubs66/code`.
 
 ## Deploy
@@ -42,11 +42,12 @@ python -m unittest discover -s tests -v
 
 ## Limitations
 
-- First browser playback downloads a relatively large free voice model, which may be slow on mobile networks or fail on very low-memory devices.
+- Live speech uses the **third-party TTS.ai anonymous free tier**, currently documented at 5,000 input characters per day per IP, 500 characters per request, and 10 requests/minute. The service can queue, fail, throttle, or change its limits; use the Cancel button if needed. Two short city reports generally fit this allowance, but unlimited use is not guaranteed.
 - GitHub scheduled jobs can be delayed and may require account Actions permissions. A timed cron is not a real-time delivery guarantee.
-- No push notifications are configured: visit the site to listen.
+- No push notifications are configured: visit the site and choose Generate to listen.
+- The separate GitHub Actions 8 AM daily MP3 workflow still uses CPU Kokoro on its cloud runner and has **not been verified to run successfully**; live on-demand cloud voice is the working fast option.
 - Weather API usage must comply with [Open-Meteo's free noncommercial terms](https://open-meteo.com/en/terms).
 
 ## Licenses
 
-Kokoro-82M: Apache 2.0. Live forecasts: Open-Meteo (attribution required). Music: procedurally generated original notes and pads in this project.
+Kokoro-82M: Apache 2.0. Hosted text-to-speech: TTS.ai (subject to its usage terms and free-tier limits). Live forecasts: Open-Meteo (attribution required). Music: original programmatically generated synth/piano in the browser.
