@@ -43,10 +43,17 @@ async function liveWeather(c) {
 }
 function announcement(r){
   const weekday=new Intl.DateTimeFormat('en-US',{timeZone:'UTC',weekday:'long'}).format(new Date(r.date+'T12:00:00Z'));
-  const wind=Number(r.wind)>=12?'Winds are around '+rounded(r.wind)+' miles per hour. ':'';
-  const rain=r.rain!==null&&Number(r.rain)>=15?'There is about a '+rounded(r.rain)+' percent chance of precipitation. ':'';
-  const closing=r.slug==='los-angeles'?'Wherever this morning finds you, let the city wake up slowly, and enjoy a little sunshine.':'From the waterfront to the quiet hills, may your day start peacefully.';
-  return 'Good morning, '+r.city+'. It is '+weekday+', '+prettyDate(r.date)+', and welcome to a little moment of California calm. At the latest weather check, it is '+r.current_temp+' degrees with '+r.current_desc+'. Today brings '+r.today_desc+', with a high near '+r.today_high+' degrees, and a low around '+r.today_low+' tonight. '+wind+rain+'Looking ahead to tomorrow, expect '+r.tomorrow_desc+', a high around '+r.tomorrow_high+', and a nighttime low near '+r.tomorrow_low+'. '+closing+' This is Good Morning, '+r.city+'.';
+  const wind=Number(r.wind)>=12?'A breeze near '+rounded(r.wind)+' miles an hour is moving through. ':'';
+  const rain=r.rain!==null&&Number(r.rain)>=15?'The chance of rain is '+rounded(r.rain)+' percent. ':'';
+  const closing=r.slug==='los-angeles'
+    ? 'Wherever your morning begins, let the sunshine find you.'
+    : 'From the waterfront to the quiet hills, have a peaceful morning.';
+  return 'Good morning, '+r.city+'. It is '+weekday+', '+prettyDate(r.date)+'. '
+    +'The city is waking up slowly. Right now, it is '+r.current_temp+' degrees with '+r.current_desc+'. '
+    +'Today brings '+r.today_desc+', a high near '+r.today_high+' and a low around '+r.today_low+' tonight. '
+    +wind+rain
+    +'Tomorrow brings '+r.tomorrow_desc+', a high near '+r.tomorrow_high+' and a low near '+r.tomorrow_low+'. '
+    +closing+' This is Good Morning, '+r.city+'.';
 }
 const speechCache=new Map();
 let preferredVoice=(()=>{try{return localStorage.getItem('california-radio-voice')||'af_nicole'}catch{return 'af_nicole'}})();
@@ -220,7 +227,7 @@ function card(r){
   };
   voiceLabel.append(choice);a.append(voiceLabel);
   const button=element('button','live-play','▶ Generate radio recording');button.type='button';button.setAttribute('aria-label','Generate and listen to natural neural radio for '+r.city);button.setAttribute('aria-pressed','false');button.onclick=()=>speak(r,button);a.append(button);
-  a.append(element('p','voice-note','Free natural neural voice, not your browser’s robotic system voice. First use downloads the neural voice model (about 100 MB). Generation runs in the background so the page stays usable. Tap again to cancel. Once generated, tap Play. Piano and synth are included.'));
+  a.append(element('p','voice-note','Free natural neural voice, not your browser’s robotic system voice. First use downloads the neural voice model (about 100 MB). Voice generation happens off the main page, but a slower CPU may still need several minutes. Tap again to cancel. Once ready, tap Play. Piano and synth are included.'));
   return a;
 }
 async function load(){
