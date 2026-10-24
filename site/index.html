@@ -1,49 +1,230 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#142325">
-  <meta name="description" content="Peaceful, free morning radio weather broadcasts for Los Angeles and San Francisco. Two natural American female AI weather broadcasts with soft music and fresh weather, free to play.">
-  <title>California Morning Radio · A softer start</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div class="ambient-light" aria-hidden="true"></div>
-  <div class="app-shell">
-    <header class="topbar">
-      <a href="./" class="brand" aria-label="California Morning Radio home">
-        <span class="logo-icon" aria-hidden="true">◒</span>
-        <span>California<span class="brand-sub">Morning Radio</span></span>
-      </a>
-      <div class="on-air"><span class="status-pulse"></span> YOUR DAILY SLOWDOWN</div>
-    </header>
-
-    <main>
-      <section class="hero" aria-labelledby="hero-title">
-        <div class="eyebrow">THE PACIFIC COAST · EVERY MORNING AT EIGHT</div>
-        <div class="hero-sun" aria-hidden="true"><span></span></div>
-        <h1 id="hero-title">A softer start<br><em>to California.</em></h1>
-        <p class="subtitle">A gentle voice, the morning sky, and a moment to yourself. Two cities, two little broadcasts — with freshly verified weather whenever you tune in.</p>
-        <div class="clockline"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="clock">California local time</span><span class="dot">·</span><span>Fahrenheit</span></div>
-      </section>
-
-      <section class="today" aria-labelledby="listen-title">
-        <div class="section-heading"><div><span class="tiny-label">TUNE IN</span><h2 id="listen-title">This morning's broadcasts</h2></div><span id="edition" class="edition">Checking today's edition…</span></div>
-        <div id="broadcasts" class="cards" aria-live="polite">
-          <article class="placeholder" role="status"><span class="loading-spin"></span> Finding this morning's recordings…</article>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0b2039" />
+    <meta
+      name="description"
+      content="A little California, wherever you are. Fresh Los Angeles and San Francisco weather, warm radio voices, and an original ambient soundtrack."
+    />
+    <meta property="og:title" content="California Morning Radio" />
+    <meta
+      property="og:description"
+      content="Real weather. Real places. A softer soundtrack to your day."
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:image"
+      content="https://california-radio-independent.vercel.app/og-image.png"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <title>California Morning Radio · A little California</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body data-phase="day" data-weather="neutral" data-city="los-angeles">
+    <a class="skip-link" href="#broadcasts">Skip to broadcasts</a>
+    <div class="environment" aria-hidden="true">
+      <div class="landscape">
+        <div class="landscape-day"></div>
+        <div class="landscape-night"></div>
+      </div>
+      <div class="sky-tint"></div>
+      <div class="stars"></div>
+      <div class="horizon-glow"></div>
+      <div class="cloud cloud-one"></div>
+      <div class="cloud cloud-two"></div>
+      <div class="fog"></div>
+      <div class="precipitation"></div>
+      <div class="grain"></div>
+    </div>
+    <div class="app-shell">
+      <header class="topbar">
+        <a href="#home" class="brand" aria-label="California Morning Radio home"
+          ><img src="/brand-emblem.png" width="76" height="76" alt="" /><span
+            >California<span class="brand-sub">Morning Radio</span></span
+          ></a
+        >
+        <nav aria-label="Main navigation">
+          <a class="active" href="#home">Home</a><a href="#broadcasts">Cities</a
+          ><a href="#weather-details">Weather</a><a href="#about">About</a>
+        </nav>
+        <div class="header-right">
+          <span class="live-dot"></span><span>THE PACIFIC IS CALLING</span>
         </div>
-        <p id="status-message" class="status-message"></p>
-      </section>
-
-      <section class="signoff" aria-label="About the show"><div class="signoff-art" aria-hidden="true"><div class="sun-core"></div><div class="landscape l1"></div><div class="landscape l2"></div><div class="landscape l3"></div></div><div><span class="tiny-label">A NOTE FROM THE COAST</span><h2>The forecast can wait.<br><em>Enjoy the morning first.</em></h2><p>Natural neural American female narration, dreamy synths, and quiet piano with freshly verified California weather. Free, no account or credits.</p></div></section>
-    </main>
-
-    <footer><div>CALIFORNIA MORNING RADIO <span class="tiny-dot">✳</span> MADE WITH CARE</div><div>Live forecast data: <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> · Voice: <a href="https://tts.ai" target="_blank" rel="noopener noreferrer">Kokoro by TTS.ai</a> · Music: original synth & piano</div></footer>
-  </div>
-  <script type="module" src="./script.js"></script>
-</body>
+      </header>
+      <main id="home">
+        <section class="hero" aria-labelledby="hero-title">
+          <div class="eyebrow">
+            <span></span> LIVE WEATHER. REAL PLACES. <span></span>
+          </div>
+          <h1 id="hero-title">California Morning Radio</h1>
+          <p class="subtitle" id="atmospheric-subtitle">
+            A little California, wherever you are.
+          </p>
+          <div class="clockline">
+            <span class="live-dot"></span
+            ><time id="clock">California local time</time
+            ><span class="clock-divider"></span><span id="today-date"></span>
+          </div>
+          <p class="hero-signature" id="hero-signature">
+            Stay a little. Listen a while.
+          </p>
+        </section>
+        <section class="today" id="broadcasts" aria-labelledby="listen-title">
+          <div class="section-heading">
+            <h2 id="listen-title">Two cities. One California state of mind.</h2>
+            <span class="edition">YOUR LOCAL WEATHER, SET TO MUSIC</span>
+          </div>
+          <div class="cards" id="city-cards"></div>
+        </section>
+        <section class="radio-console" aria-label="Radio player">
+          <div class="record-art">
+            <img
+              src="/brand-emblem.png"
+              width="88"
+              height="88"
+              alt="California coastal sunrise emblem"
+            />
+          </div>
+          <div class="now-playing">
+            <span class="tiny-label" id="player-label"
+              >YOUR MOMENT OF CALIFORNIA</span
+            >
+            <h2 id="player-title">The coast is calling.</h2>
+            <p id="player-meta">
+              Choose a city to make your own radio edition.
+            </p>
+          </div>
+          <div class="waveform-panel">
+            <canvas
+              id="waveform"
+              aria-label="Audio waveform, active during playback"
+              role="img"
+            ></canvas>
+            <div class="seek-row">
+              <span id="elapsed">0:00</span
+              ><input
+                id="seek"
+                type="range"
+                min="0"
+                max="1000"
+                value="0"
+                disabled
+                aria-label="Recording position"
+              /><span id="duration">0:00</span>
+            </div>
+          </div>
+          <div class="transport">
+            <button
+              class="icon-button"
+              id="restart"
+              disabled
+              aria-label="Restart recording"
+            >
+              ↶</button
+            ><button
+              class="console-play"
+              id="player-play"
+              aria-label="Generate Los Angeles broadcast"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m9 5 11 7-11 7z" />
+              </svg></button
+            ><button
+              class="icon-button"
+              id="forward"
+              disabled
+              aria-label="Skip forward 15 seconds"
+            >
+              ↷<small>15</small>
+            </button>
+          </div>
+          <label class="volume-control"
+            ><span aria-hidden="true">♪</span
+            ><input
+              type="range"
+              id="volume"
+              min="0"
+              max="1"
+              step=".01"
+              value=".8"
+              aria-label="Volume"
+          /></label>
+          <div class="console-bottom">
+            <p id="status-message" role="status" aria-live="polite">
+              Finding your California weather…
+            </p>
+            <div class="record-actions">
+              <button id="cancel-generation" hidden>Cancel generation</button
+              ><button id="update-edition" disabled>↻ New edition</button
+              ><a id="download" aria-disabled="true">↓ Download</a>
+            </div>
+          </div>
+          <audio id="audio" preload="metadata"></audio>
+        </section>
+        <section
+          class="weather-strip"
+          id="weather-details"
+          aria-labelledby="weather-title"
+        >
+          <div>
+            <span class="tiny-label">A FRESH LOOK OUTSIDE</span>
+            <h2 id="weather-title">The sky, in a little more detail.</h2>
+          </div>
+          <div id="detail-content">
+            Verified local weather will appear here.
+          </div>
+        </section>
+        <section class="signoff" id="about">
+          <div class="mini-frequency" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span
+            ><span></span><span></span><span></span><span></span>
+          </div>
+          <span class="tiny-label">LESS NOISE. MORE CALIFORNIA.</span>
+          <h2>A softer soundtrack<br />to wherever life takes you.</h2>
+          <p>
+            Fresh local weather. A familiar voice. A little piano drifting in
+            from the coast.<br />Made for an unhurried moment, any time of day.
+          </p>
+          <p class="about-note">
+            City scenes are artistic impressions. Conditions represent the city
+            forecast coordinates, rather than individual landmarks. Voice
+            generation uses the cloud TTS.ai service and is subject to its
+            availability and limits.
+          </p>
+        </section>
+      </main>
+      <footer>
+        <span>© <span id="year"></span> CALIFORNIA MORNING RADIO</span
+        ><span
+          >Weather by
+          <a
+            href="https://open-meteo.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Open-Meteo</a
+          >
+          · Voices by
+          <a href="https://tts.ai" target="_blank" rel="noopener noreferrer"
+            >Kokoro / TTS.ai</a
+          >
+          · Original ambient music</span
+        ><a href="#home">BACK TO THE HORIZON ↑</a>
+      </footer>
+    </div>
+    <script type="module" src="/script.js"></script>
+  </body>
 </html>

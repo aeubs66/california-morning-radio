@@ -70,3 +70,27 @@ Without a key the site already varies its time-aware scripts and uses verified O
 The optional LLM now writes the **full radio narration structure** as a fresh, varied monologue using 5 strict placeholders (greeting, current conditions, today's forecast, tomorrow's forecast, closing). Real temperatures and weather statements are inserted after generation from verified Open-Meteo readings. The template is rejected if it repeats/misses placeholders, invents factual weather assertions or exceeds permitted length. If Gemini fails, is over quota, or is not configured, the site falls back to varied time-aware scripts. The radio identifies AI-written editions in its player.
 
 The API route is public and could consume the account's free Gemini quota if abused. Gemini free-tier quotas and availability vary by region and account; free-tier usage may be used by Google to improve their products. Only city/weather/time information is sent to Gemini, not personal conversation data.
+
+## Cinematic interface
+
+The Vite frontend stays dependency-light and uses three focused modules:
+
+- `weather.js`: current observations, complete WMO condition mapping, stale-data rejection, Pacific dates and sunrise/sunset themes.
+- `player.js`: the shared audio console, media controls, seek/download, and a Web Audio analyser. The visualizer stays flat when paused, hidden, or reduced motion is requested.
+- `script.js`: independent city loading, voice preferences, cancellable generation, scheduled MP3 discovery and accessible UI state.
+
+The existing `neural-voice.js` cloud Kokoro and original audio mixing engine and `api/radio-script.js` protected Gemini endpoint are retained. No local model inference or client API keys are added. Playback requires an explicit Play press after generation, preserving mobile autoplay rules.
+
+The supplied coastal emblem is used for the brand. A simplified SVG favicon and 16/32 px PNG fallbacks retain the sun/ocean/radio motif at small sizes. Original AI-generated California landscape artwork is optimized as WebP. It is an artistic montage, not a live camera view; weather effects use verified city observations only. `public/og-image.png` is the sharing card.
+
+### Frontend checks
+
+```sh
+cd site
+npm ci
+npm test
+npm run build
+npm run dev
+```
+
+The Node tests cover weather freshness, missing data, WMO effects, Pacific DST boundaries, solar themes, Gemini fact slots, fallback writing, cancellation, and endpoint request validation. The original Python tests remain available from the repository root. The local Vite server does not emulate the protected serverless endpoint; Gemini falls back locally. Verify AI writing against the deployed `/api/radio-script` endpoint.
