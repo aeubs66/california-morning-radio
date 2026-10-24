@@ -65,7 +65,7 @@ function stop(){
     item.button.setAttribute('aria-pressed','false');
   }
 }
-function ensureAudioUI(r,button,cached,context,scriptMode) {
+function ensureAudioUI(r,button,cached,context,scriptMode,model) {
   const card=button.closest('.weather-card');
   const oldPlayer=card.querySelector('.radio-player');
   if(oldPlayer){
@@ -74,7 +74,7 @@ function ensureAudioUI(r,button,cached,context,scriptMode) {
     oldPlayer.remove();
   }
   const wrapper=element('div','radio-player');
-  const title=element('div','player-ready','✓ '+Math.round(cached.duration)+'-second '+context.phase+' edition · '+context.localTime+' Pacific · '+(scriptMode==='AI-written'?'AI-personalized':'time-aware'));
+  const title=element('div','player-ready','✓ '+Math.round(cached.duration)+'-second '+context.phase+' edition · '+context.localTime+' Pacific · '+(scriptMode==='AI-written'?(model||'Gemini')+' script':'time-aware script'));
   const audio=element('audio');
   audio.controls=true;
   audio.preload='metadata';
@@ -185,7 +185,7 @@ async function speak(r,button){
    if(button._radio!==item)return;
    clearInterval(item.elapsedTimer);
    if(playing===item)playing=null;
-   ensureAudioUI(r,button,cached,context,broadcast.mode);
+   ensureAudioUI(r,button,cached,context,broadcast.mode,broadcast.model);
    status.textContent='Your '+context.phase+' '+r.city+' edition is ready, recorded at '+context.localTime+' Pacific. Press Play, or generate a newer edition later.';
  }catch(error){
    if(button._radio!==item)return;
@@ -232,7 +232,7 @@ function card(r){
   };
   voiceLabel.append(choice);a.append(voiceLabel);
   const button=element('button','live-play','▶ Generate radio recording');button.type='button';button.setAttribute('aria-label','Generate and listen to natural neural radio for '+r.city);button.setAttribute('aria-pressed','false');button.onclick=()=>speak(r,button);a.append(button);
-  a.append(element('p','voice-note','A fresh weather and time-aware script is written whenever you press Generate. Optional Gemini adds unique radio writing; the accurate forecast comes directly from Open-Meteo. Cloud narration and soft music are included.'));
+  a.append(element('p','voice-note','A fresh weather and time-aware script is written whenever you press Generate. Gemini can write the whole warm radio broadcast using protected fact slots; temperatures and forecasts still come only from Open-Meteo. Cloud narration and soft music are included.'));
   return a;
 }
 async function load(){
