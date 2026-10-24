@@ -1,0 +1,51 @@
+name: California Morning Weather Radio
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 8 * * *'
+      timezone: 'America/Los_Angeles'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: california-weather-radio
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout the standalone radio repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Install free voice and audio tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq espeak-ng ffmpeg
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Generate two new California morning broadcasts
+        env:
+          HF_HUB_DISABLE_TELEMETRY: '1'
+          OMP_NUM_THREADS: '2'
+        run: python -m radio.broadcast --site site
+      - name: Publish today's MP3 recordings
+        run: |
+          git config user.name 'California Morning Radio Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -f site/data.json site/audio/
+          git add -u site/audio/
+          if ! git diff --cached --quiet; then
+            git commit -m "radio: publish new Pacific morning forecasts [skip ci]"
+            git push origin HEAD:main
+          else
+            echo 'No audio changes to publish.'
+          fi

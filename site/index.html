@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#142325">
+  <meta name="description" content="Peaceful, free morning radio weather broadcasts for Los Angeles and San Francisco. Two natural American female AI weather broadcasts with soft music and fresh weather, free to play.">
+  <title>California Morning Radio · A softer start</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="ambient-light" aria-hidden="true"></div>
+  <div class="app-shell">
+    <header class="topbar">
+      <a href="./" class="brand" aria-label="California Morning Radio home">
+        <span class="logo-icon" aria-hidden="true">◒</span>
+        <span>California<span class="brand-sub">Morning Radio</span></span>
+      </a>
+      <div class="on-air"><span class="status-pulse"></span> YOUR DAILY SLOWDOWN</div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="eyebrow">THE PACIFIC COAST · EVERY MORNING AT EIGHT</div>
+        <div class="hero-sun" aria-hidden="true"><span></span></div>
+        <h1 id="hero-title">A softer start<br><em>to California.</em></h1>
+        <p class="subtitle">A gentle voice, the morning sky, and a moment to yourself. Two cities, two little broadcasts — with freshly verified weather whenever you tune in.</p>
+        <div class="clockline"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="clock">California local time</span><span class="dot">·</span><span>Fahrenheit</span></div>
+      </section>
+
+      <section class="today" aria-labelledby="listen-title">
+        <div class="section-heading"><div><span class="tiny-label">TUNE IN</span><h2 id="listen-title">This morning's broadcasts</h2></div><span id="edition" class="edition">Checking today's edition…</span></div>
+        <div id="broadcasts" class="cards" aria-live="polite">
+          <article class="placeholder" role="status"><span class="loading-spin"></span> Finding this morning's recordings…</article>
+        </div>
+        <p id="status-message" class="status-message"></p>
+      </section>
+
+      <section class="signoff" aria-label="About the show"><div class="signoff-art" aria-hidden="true"><div class="sun-core"></div><div class="landscape l1"></div><div class="landscape l2"></div><div class="landscape l3"></div></div><div><span class="tiny-label">A NOTE FROM THE COAST</span><h2>The forecast can wait.<br><em>Enjoy the morning first.</em></h2><p>Natural neural American female narration, dreamy synths, and quiet piano with freshly verified California weather. Free, no account or credits.</p></div></section>
+    </main>
+
+    <footer><div>CALIFORNIA MORNING RADIO <span class="tiny-dot">✳</span> MADE WITH CARE</div><div>Live forecast data: <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> · Voice: <a href="https://huggingface.co/hexgrad/Kokoro-82M" target="_blank" rel="noopener noreferrer">Kokoro neural voices</a> · Music: original synth & piano</div></footer>
+  </div>
+  <script src="neural-voice.js" defer></script>
+  <script src="script.js" defer></script>
+</body>
+</html>
