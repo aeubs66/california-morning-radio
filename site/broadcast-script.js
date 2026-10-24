@@ -86,7 +86,7 @@ export function assembleBroadcast(r,ctx,flavor){
  // Figures below are never authored by an LLM; only verified live data.
  const breeze=Number(r.wind)>=12?" Winds are currently around "+Math.round(r.wind)+" miles per hour.":"";
  const rain=(r.rain!==null&&r.rain!==undefined&&Number(r.rain)>=15)?" Today's chance of precipitation is "+Math.round(r.rain)+" percent.":"";
- const intro=ctx.phase==="night"?"It's "+ctx.localTime+" in California.":"It's "+ctx.localTime+" Pacific time.";
+ const intro="It's "+ctx.localTime+" Pacific time on "+ctx.weekday+", "+ctx.dateLabel+".";
  return [
   ctx.greeting+", "+spokenCity+". "+intro+" "+f.opening,
   "At the latest weather check, it's "+r.current_temp+" degrees with "+r.current_desc+".",

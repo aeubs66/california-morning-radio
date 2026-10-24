@@ -51,3 +51,22 @@ python -m unittest discover -s tests -v
 ## Licenses
 
 Kokoro-82M: Apache 2.0. Hosted text-to-speech: TTS.ai (subject to its usage terms and free-tier limits). Live forecasts: Open-Meteo (attribution required). Music: original programmatically generated synth/piano in the browser.
+
+## Time-aware and AI-written scripts
+
+The site checks fresh weather **whenever you press Generate**, not only when the page opens. It uses the California-local clock (America/Los_Angeles), so openings and transitions fit morning, afternoon, evening or late night. The audio player labels when an edition was created and includes a Generate an updated edition button. An old recording does not silently change when you replay it.
+
+### Optional free-tier Gemini AI writing
+
+Without a key the site already varies its time-aware scripts and uses verified Open-Meteo facts. For more original editorial writing, Gemini 2.5 Flash-Lite is available:
+
+1. Create a key at https://aistudio.google.com/api-keys if your region/account is eligible.
+2. Open https://vercel.com/ayoubs-projects-d793d9ee/california-radio-independent → Settings → Environment Variables.
+3. Add the sensitive Production environment variable `GEMINI_API_KEY` with your new API key.
+4. Redeploy the Production website, then click Generate again.
+
+**Never paste the API key into GitHub, browser JavaScript, or public messages.** The secret stays in Vercel's server-side environment and is read by `site/api/radio-script.js`.
+
+The optional LLM creates only non-factual radio interludes. All numerical weather and meteorological statements are inserted from verified Open-Meteo readings; AI fragments are validated and rejected if they contain unsupported claims. If Gemini fails, is over quota, or is not configured, the site falls back to its varied time-aware scripts.
+
+The API route is public and could consume the account's free Gemini quota if abused. Gemini free-tier quotas and availability vary by region and account; free-tier usage may be used by Google to improve their products. Only city/weather/time information is sent to Gemini, not personal conversation data.
