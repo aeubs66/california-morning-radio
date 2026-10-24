@@ -159,7 +159,7 @@ async function speak(r,button){
   button._radio=item;
   button.textContent='■ Cancel generation';
   button.setAttribute('aria-pressed','true');
-  status.textContent='AI voice generating in the background. The page will remain responsive. First-time download ~100 MB.';
+  status.textContent='Creating your radio report using a free cloud voice service. No AI model downloads or heavy work on your computer.';
   item.elapsedTimer=setInterval(()=>{
     if(button._radio!==item)return clearInterval(item.elapsedTimer);
     status.textContent=item.progressText+' · '+Math.floor((Date.now()-item.startedAt)/1000)+'s elapsed. You can cancel anytime.';
@@ -227,7 +227,7 @@ function card(r){
   };
   voiceLabel.append(choice);a.append(voiceLabel);
   const button=element('button','live-play','▶ Generate radio recording');button.type='button';button.setAttribute('aria-label','Generate and listen to natural neural radio for '+r.city);button.setAttribute('aria-pressed','false');button.onclick=()=>speak(r,button);a.append(button);
-  a.append(element('p','voice-note','Free natural neural voice, not your browser’s robotic system voice. First use downloads the neural voice model (about 100 MB). Voice generation happens off the main page, but a slower CPU may still need several minutes. Tap again to cancel. Once ready, tap Play. Piano and synth are included.'));
+  a.append(element('p','voice-note','Free natural neural voice, not your browser’s robotic system voice. Speech is generated on a remote server without downloading any large model. Fast free cloud narration — no large AI downloads or heavy CPU processing. Tap again to cancel. Soft piano and synth music are included.'));
   return a;
 }
 async function load(){
@@ -239,7 +239,7 @@ async function load(){
       if(response.ok){const data=await response.json();if(data.date===pacificDate()&&Array.isArray(data.reports))current.forEach(r=>{const x=data.reports.find(y=>y.slug===r.slug);if(x?.audio){r.audio=x.audio;r.duration=x.duration}});}
     }catch{}
     box.replaceChildren(...current.map(card));document.getElementById('edition').textContent=prettyDate(pacificDate())+' · Pacific time';
-    status.textContent=current.every(r=>r.audio)?'Recorded MP3 editions are ready. Or listen live for the newest conditions.':'Two free live broadcasts are ready. Choose a warm female neural voice and press Play. First use downloads the free AI model. Automatic morning MP3 publishing is not yet active.';
+    status.textContent=current.every(r=>r.audio)?'Recorded MP3 editions are ready. Or listen live for the newest conditions.':'Two free live broadcasts are ready. Choose a warm female neural voice and press Play. Cloud voice generation is free within daily provider limits. Automatic morning MP3 publishing is not yet active.';
   }catch(e){box.replaceChildren(element('article','placeholder','The live weather service is unavailable. No forecast will be invented.'));status.textContent='Unable to verify weather: '+e.message;}
 }
 const css=document.createElement('style');css.textContent='.voice-label{display:block;font-size:10px;letter-spacing:.16em;color:#dfb980;margin:17px 0 5px}.voice-choice{display:block;width:100%;margin-top:8px;border:1px solid #69817a;border-radius:7px;background:#213739;color:#f2ede1;padding:12px 10px;font:inherit;font-size:13px;letter-spacing:0}.radio-player{margin:14px 0 8px;padding:14px;border:1px solid rgba(223,185,128,.5);border-radius:9px;background:rgba(0,0,0,.16)}.radio-player audio{display:block;width:100%;margin-top:10px;height:45px}.player-ready{color:#f0d5a9;font-weight:600;font-size:12px}.wav-download{display:block;margin-top:15px;font-size:12px;color:#dfb980;text-decoration:underline;text-underline-offset:4px}.live-play{width:100%;border:1px solid #e5bc8b;border-radius:8px;padding:15px;margin-top:13px;background:#e6c49a;color:#1c3030;font-size:12px;letter-spacing:.13em;font-weight:700;cursor:pointer}.live-play[aria-pressed=true]{background:#213a3c;color:#f2ede1}.voice-note{font-size:11px;color:#bdc6bc;line-height:1.6;margin:10px 0 0}';document.head.append(css);
