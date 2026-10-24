@@ -83,7 +83,7 @@ export default async function handler(req,res){
    });
    if(!r.ok){
     // Never return the provider's error text or key in HTTP responses.
-    if(r.status===400||r.status===404){lastCode="model_not_available";continue;}
+    if([400,404,500,502,503,504].includes(r.status)){lastCode=r.status===503?"model_overloaded":"model_not_available";continue;}
     lastCode=r.status===401||r.status===403?"gemini_auth_or_access":r.status===429?"gemini_quota":"gemini_http_"+r.status;
     break;
    }
