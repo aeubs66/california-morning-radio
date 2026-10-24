@@ -9,7 +9,12 @@ A peaceful California weather radio show for **Los Angeles** and **San Francisco
 
 ## Deploy
 
-The listening site's static files are in `site/`. On Vercel, create a **new project connected to this repository**, set Root Directory to `site`, Framework Preset to Other, and use the default static output. Production deployments serve `site/index.html` at the site root.
+The listening site's static files are in `site/`. This repository is linked to its **own Vercel project**, separate from `aeubs66/code`:
+
+- [Production website](https://california-radio-independent-ayoubs-projects-d793d9ee.vercel.app/) (available when the first deployment reaches **Ready**)
+- [Vercel project](https://vercel.com/ayoubs-projects-d793d9ee/california-radio-independent)
+
+Vercel builds from the `main` branch, with Root Directory `site`, Framework Preset **Other**, and a static site at `site/index.html`.
 
 The project is designed to stay available for live listening even if the daily server-side MP3 job fails.
 
